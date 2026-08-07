@@ -419,12 +419,9 @@
   </div>
 
 <script>
-/* ==== ضعي بيانات SUPABASE الصحيحة هنا ==== */
+/* ==== بيانات SUPABASE ==== */
 const SUPABASE_URL = "https://bzmshjplqqrghjghdwdx.supabase.co";
-// احصل على anon key الحقيقي من: Project Settings -> API -> Project API keys -> anon public
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6bXNoanBscXFyZ2hqZ2hkd2R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNjEyMjIsImV4cCI6MjEwMTYzNzIyMn0.dN-fc_eMhjfhBBjHo3Um2C8gbu88j5mnFOO5UstKzOc"; 
-/* ==================================================== */
-
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6bXNoanBscXFyZ2hqZ2hkd2R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNjEyMjIsImV4cCI6MjEwMTYzNzIyMn0.dN-fc_eMhjfhBBjHo3Um2C8gbu88j5mnFOO5UstKzOc";
 let supabase = null;
 if (window.supabase && SUPABASE_ANON_KEY.startsWith("eyJ")) {
   supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
