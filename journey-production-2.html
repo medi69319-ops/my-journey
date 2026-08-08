@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Egypt Journey</title>
+<!--
+  ============================================================
+  SETUP — 3 THINGS TO DO BEFORE THIS GOES LIVE
+  ============================================================
+  1) Create a free Supabase project at supabase.com
+  2) Run the SQL + storage setup described in the chat message
+  3) Paste your Project URL + anon key into the two constants
+     below (SUPABASE_URL / SUPABASE_ANON_KEY)
+  That's it — everything else already works.
+  ============================================================
+-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1e3d;
+    --bg-soft:#12294f;
+    --panel:#16305c;
+    --panel-line:rgba(212,175,106,0.22);
+    --gold:#d4af6a;
+    --gold-bright:#f0ce8b;
+    --teal:#3fb8ae;
+    --ink:#f3ecdd;
+    --ink-muted:#93a3c4;
+    --danger:#c96a5a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(63,184,174,0.10), transparent 55%),
+      radial-gradient(ellipse at 90% 100%, rgba(212,175,106,0.08), transparent 50%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    min-height:100svh;
+  }
+  .display{font-family:'Cinzel', serif;}
+  button{font-family:inherit; cursor:pointer;}
+  input, textarea, select{font-family:inherit;}
+
+  /* -------- shared layout -------- */
+  .wrap{max-width:640px; margin:0 auto; padding:6vh 6vw 10vh;}
+  .eyebrow{
+    font-family:'Cinzel', serif;
+    font-size:0.72rem;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--teal);
+    display:block;
+    margin-bottom:0.5rem;
+  }
+  .btn{
+    border:none;
+    border-radius:999px;
+    padding:0.85rem 1.8rem;
+    font-weight:600;
+    font-size:0.95rem;
+    transition:transform 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-gold{
+    background:linear-gradient(160deg, var(--gold-bright), var(--gold));
+    color:#1a1305;
+  }
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--panel-line);
+    color:var(--ink);
+  }
+  .btn:disabled{opacity:0.5; cursor:not-allowed;}
+
+  /* -------- entry screen -------- */
+  #entry-screen{
+    min-height:100svh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:6vh 8vw;
+  }
+  .ankh{
+    width:56px; height:56px;
+    margin-bottom:1.6rem;
+    color:var(--gold);
+  }
+  #entry-screen h1{
+    font-size:clamp(1.6rem, 6vw, 2.2rem);
+    margin-bottom:0.5rem;
+  }
+  #entry-screen p{
+    color:var(--ink-muted);
+    max-width:36ch;
+    margin-bottom:2.2rem;
+  }
+  .code-input-row{
+    display:flex; gap:0.6rem;
+    width:100%; max-width:340px;
+    margin-bottom:1rem;
+  }
+  .code-input-row input{
+    flex:1;
+    text-transform:uppercase;
+    letter-spacing:3px;
+    text-align:center;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:10px;
+    color:var(--ink);
+    padding:0.85rem;
+    font-size:1.05rem;
+  }
+  .or-divider{
+    color:var(--ink-muted);
+    font-size:0.8rem;
+    margin:1.4rem 0;
+    display:flex; align-items:center; gap:0.8rem;
+    width:100%; max-width:340px;
+  }
+  .or-divider::before, .or-divider::after{
+    content:""; flex:1; height:1px; background:var(--panel-line);
+  }
+
+  /* -------- journey screen -------- */
+  #journey-screen{display:none;}
+  .journey-header{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    margin-bottom:2rem; gap:1rem;
+  }
+  .journey-header h1{font-size:1.5rem;}
+  .code-pill{
+    display:inline-flex; align-items:center; gap:0.5rem;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:999px;
+    padding:0.4rem 0.9rem;
+    font-size:0.82rem;
+    color:var(--gold-bright);
+    letter-spacing:1.5px;
+    margin-top:0.5rem;
+  }
+  .link-box{
+    background:var(--panel);
+    border:1px dashed var(--panel-line);
+    border-radius:10px;
+    padding:0.9rem 1rem;
+    font-size:0.8rem;
+    color:var(--ink-muted);
+    word-break:break-all;
+    margin-bottom:2rem;
+    display:flex; justify-content:space-between; align-items:center; gap:0.8rem;
+  }
+  .link-box button{
+    background:none; border:1px solid var(--panel-line); color:var(--gold);
+    border-radius:6px; padding:0.3rem 0.7rem; font-size:0.75rem; flex-shrink:0;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding:5vh 4vw;
+    border:1px dashed var(--panel-line);
+    border-radius:16px;
+    color:var(--ink-muted);
+  }
+  .empty-state p{margin-bottom:1.2rem;}
+
+  /* -------- cartouche cards -------- */
+  .feed{display:flex; flex-direction:column; gap:1.3rem; margin-bottom:2.5rem;}
+  .cartouche{
+    position:relative;
+    background:var(--panel);
+    border:1.5px solid var(--panel-line);
+    border-radius:999px;
+    padding:1rem 1.6rem 1rem 1.9rem;
+    display:flex; gap:1rem; align-items:center;
+    overflow:hidden;
+  }
+  .cartouche::before, .cartouche::after{
+    content:"";
+    position:absolute; top:6px; bottom:6px;
+    width:3px;
+    background:var(--gold);
+    opacity:0.6;
+    border-radius:2px;
+  }
+  .cartouche::before{left:10px;}
+  .cartouche::after{right:10px;}
+  .cartouche.photo-card{
+    border-radius:20px;
+    padding:0.9rem;
+  }
+  .cartouche.photo-card::before, .cartouche.photo-card::after{display:none;}
+  .cartouche.photo-card img{
+    width:100%; border-radius:14px; display:block; max-height:340px; object-fit:cover;
+  }
+  .card-icon{
+    width:38px; height:38px; flex-shrink:0;
+    border-radius:50%;
+    background:rgba(63,184,174,0.15);
+    color:var(--teal);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem;
+  }
+  .card-body{flex:1; min-width:0;}
+  .card-site{
+    font-size:0.72rem; letter-spacing:1px; text-transform:uppercase;
+    color:var(--teal); margin-bottom:0.2rem;
+  }
+  .card-text{color:var(--ink); font-size:0.95rem; line-height:1.5;}
+  .card-meta{
+    font-size:0.72rem; color:var(--ink-muted); margin-top:0.4rem;
+  }
+  .photo-meta{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:0.6rem 0.4rem 0.1rem;
+    font-size:0.78rem; color:var(--ink-muted);
+  }
+  .video-link{
+    display:inline-flex; align-items:center; gap:0.4rem;
+    color:var(--gold-bright); font-size:0.9rem; margin-top:0.3rem;
+    text-decoration:none; border-bottom:1px solid var(--gold-bright);
+  }
+
+  /* -------- add button + modal -------- */
+  .fab{
+    position:fixed;
+    bottom:5vh; right:6vw;
+    width:60px; height:60px;
+    border-radius:50%;
+    background:linear-gradient(160deg, var(--gold-bright), var(--gold));
+    color:#1a1305;
+    font-size:1.8rem;
+    border:none;
+    box-shadow:0 10px 26px rgba(0,0,0,0.4);
+    display:flex; align-items:center; justify-content:center;
+    z-index:20;
+  }
+  .modal-overlay{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(5,12,26,0.72);
+    backdrop-filter:blur(3px);
+    z-index:30;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    background:var(--bg-soft);
+    border:1px solid var(--panel-line);
+    border-radius:22px 22px 0 0;
+    width:100%; max-width:520px;
+    padding:1.6rem 1.6rem 2.4rem;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .modal h2{font-size:1.15rem; margin-bottom:1.1rem;}
+  .type-tabs{display:flex; gap:0.5rem; margin-bottom:1.2rem;}
+  .type-tab{
+    flex:1;
+    padding:0.6rem 0.4rem;
+    text-align:center;
+    border-radius:10px;
+    border:1px solid var(--panel-line);
+    background:transparent;
+    color:var(--ink-muted);
+    font-size:0.85rem;
+  }
+  .type-tab.active{
+    background:rgba(63,184,174,0.15);
+    border-color:var(--teal);
+    color:var(--teal);
+  }
+  .field{margin-bottom:1rem;}
+  .field label{
+    display:block; font-size:0.78rem; color:var(--ink-muted); margin-bottom:0.4rem;
+  }
+  .field input[type=text], .field textarea, .field input[type=url]{
+    width:100%;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:10px;
+    color:var(--ink);
+    padding:0.7rem 0.85rem;
+    font-size:0.9rem;
+  }
+  .field textarea{resize:vertical; min-height:70px;}
+  .file-drop{
+    border:1.5px dashed var(--panel-line);
+    border-radius:12px;
+    padding:1.4rem;
+    text-align:center;
+    color:var(--ink-muted);
+    font-size:0.85rem;
+    position:relative;
+  }
+  .file-drop input{
+    position:absolute; inset:0; opacity:0; cursor:pointer;
+  }
+  .preview-thumb{
+    max-width:100%; max-height:160px; border-radius:10px; margin-top:0.8rem;
+  }
+  .modal-actions{
+    display:flex; gap:0.7rem; margin-top:1.4rem;
+  }
+  .modal-actions .btn{flex:1;}
+  .status-msg{
+    font-size:0.8rem; margin-top:0.6rem; min-height:1.1em;
+  }
+  .status-msg.err{color:var(--danger);}
+  .status-msg.ok{color:var(--teal);}
+
+  .loading-row{
+    text-align:center; color:var(--ink-muted); padding:2rem; font-size:0.9rem;
+  }
+
+  @media (min-width:600px){
+    .modal-overlay{align-items:center;}
+    .modal{border-radius:22px;}
+  }
+</style>
+</head>
+<body>
+<div id="debugBanner" style="display:none; position:fixed; top:0; left:0; right:0; background:#c0392b; color:#fff; padding:1rem; z-index:99999; font-family:monospace; font-size:0.78rem; white-space:pre-wrap; direction:ltr; text-align:left;"></div>
+<script>
+window.onerror = function(msg, url, line, col, error){
+  var b = document.getElementById('debugBanner');
+  if(b){
+    b.style.display = 'block';
+    b.textContent = 'JS ERROR: ' + msg + '  (line ' + line + ')';
+  }
+  return false;
+};
+</script>
+
+  <!-- ============ ENTRY SCREEN ============ -->
+  <div id="entry-screen">
+    <svg class="ankh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+      <circle cx="12" cy="6" r="4.2"/>
+      <path d="M12 10.2V22M7 15h10"/>
+    </svg>
+    <h1 class="display">My Egypt Journey</h1>
+    <p>Every keychain carries its own story. Enter your code to open it, or start a new journey.</p>
+
+    <div class="code-input-row">
+      <input id="codeInput" type="text" maxlength="6" placeholder="e.g. K7M2QX">
+    </div>
+    <button class="btn btn-gold" style="width:100%; max-width:340px;" onclick="openJourney()">Open my journey</button>
+
+    <div class="or-divider">or</div>
+    <button class="btn btn-ghost" style="width:100%; max-width:340px;" onclick="startNewJourney()">Start a new journey</button>
+    <div id="entryStatus" class="status-msg"></div>
+  </div>
+
+  <!-- ============ JOURNEY SCREEN ============ -->
+  <div id="journey-screen">
+    <div class="wrap">
+      <div class="journey-header">
+        <div>
+          <span class="eyebrow">Keychain journey</span>
+          <h1 class="display">Your Egypt Story</h1>
+          <div class="code-pill">⌁ <span id="codeDisplay"></span></div>
+        </div>
+        <button class="btn btn-ghost" style="padding:0.5rem 1rem; font-size:0.8rem;" onclick="goToEntry()">Switch code</button>
+      </div>
+
+      <div class="link-box">
+        <span id="linkText">link</span>
+        <button onclick="copyLink(this)">Copy link</button>
+      </div>
+
+      <div id="feedLoading" class="loading-row">Loading your memories…</div>
+      <div id="feed" class="feed"></div>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <p>No memories yet — this journey is waiting for its first moment.</p>
+        <button class="btn btn-gold" onclick="openModal()">Add your first memory</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="fab" id="fabBtn" onclick="openModal()" style="display:none;">+</button>
+
+  <!-- ============ ADD MEMORY MODAL ============ -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2 class="display">Add a memory</h2>
+      <div class="type-tabs">
+        <button class="type-tab active" data-type="photo" onclick="switchType('photo')">📷 Photo</button>
+        <button class="type-tab" data-type="fact" onclick="switchType('fact')">✎ Fact</button>
+        <button class="type-tab" data-type="video" onclick="switchType('video')">▶ Video</button>
+      </div>
+
+      <div class="field">
+        <label>Site (optional) — e.g. Karnak Temple, Giza Pyramids</label>
+        <input type="text" id="siteField" placeholder="Where was this?">
+      </div>
+
+      <div id="photoFields" class="field-group">
+        <div class="field">
+          <div class="file-drop" id="fileDrop">
+            <span id="fileDropLabel">Tap to choose a photo</span>
+            <input type="file" accept="image/*" id="photoFile" onchange="handlePhotoSelect(event)">
+          </div>
+          <img id="previewThumb" class="preview-thumb" style="display:none;">
+        </div>
+        <div class="field">
+          <label>Caption (optional)</label>
+          <input type="text" id="photoCaption" placeholder="A moment worth keeping…">
+        </div>
+      </div>
+
+      <div id="factFields" class="field-group" style="display:none;">
+        <div class="field">
+          <label>What did you learn or love about this place?</label>
+          <textarea id="factText" placeholder="e.g. This obelisk is over 3,300 years old…"></textarea>
+        </div>
+      </div>
+
+      <div id="videoFields" class="field-group" style="display:none;">
+        <div class="field">
+          <label>Video link (YouTube, Drive, etc.)</label>
+          <input type="url" id="videoUrl" placeholder="https://…">
+        </div>
+        <div class="field">
+          <label>Note (optional)</label>
+          <input type="text" id="videoNote" placeholder="e.g. With my guide Ahmed at the Sphinx">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-gold" id="saveBtn" onclick="saveMemory()">Save memory</button>
+      </div>
+      <div id="modalStatus" class="status-msg"></div>
+    </div>
+  </div>
+
+<script>
+/* ==== PASTE YOUR SUPABASE PROJECT DETAILS HERE ==== */
+const SUPABASE_URL = "https://bzmshjplqqrghjghdwdx.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_LLow_MlyWsZMzu6ipF95LQ_yilJJCE0";
+/* ==================================================== */
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentCode = null;
+let currentType = 'photo';
+let pendingPhotoBlob = null; // now a Blob, uploaded to Storage instead of base64
+
+/* ---------------- code helpers ---------------- */
+function genCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+  let c = '';
+  for(let i=0;i<6;i++) c += chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+
+function startNewJourney(){
+  const code = genCode();
+  location_open(code);
+}
+
+function openJourney(){
+  const val = document.getElementById('codeInput').value.trim().toUpperCase();
+  const status = document.getElementById('entryStatus');
+  if(!val || val.length < 4){
+    status.textContent = 'Please enter a valid code.';
+    status.className = 'status-msg err';
+    return;
+  }
+  status.textContent = '';
+  location_open(val);
+}
+
+function location_open(code){
+  currentCode = code;
+  const url = new URL(window.location.href);
+  url.searchParams.set('id', code);
+  window.history.replaceState({}, '', url);
+  showJourney(code);
+}
+
+function goToEntry(){
+  document.getElementById('journey-screen').style.display = 'none';
+  document.getElementById('entry-screen').style.display = 'flex';
+  document.getElementById('fabBtn').style.display = 'none';
+  const url = new URL(window.location.href);
+  url.searchParams.delete('id');
+  window.history.replaceState({}, '', url);
+}
+
+/* ---------------- journey screen ---------------- */
+async function showJourney(code){
+  document.getElementById('entry-screen').style.display = 'none';
+  document.getElementById('journey-screen').style.display = 'block';
+  document.getElementById('fabBtn').style.display = 'flex';
+  document.getElementById('codeDisplay').textContent = code;
+  const url = new URL(window.location.href);
+  url.searchParams.set('id', code);
+  document.getElementById('linkText').textContent = url.toString();
+  await loadFeed();
+}
+
+function copyLink(btn){
+  const text = document.getElementById('linkText').textContent;
+  navigator.clipboard?.writeText(text).then(()=>{
+    const old = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(()=> btn.textContent = old, 1400);
+  }).catch(()=>{});
+}
+
+async function loadFeed(){
+  const feed = document.getElementById('feed');
+  const loading = document.getElementById('feedLoading');
+  const empty = document.getElementById('emptyState');
+  feed.innerHTML = '';
+  empty.style.display = 'none';
+  loading.style.display = 'block';
+
+  try{
+    const { data, error } = await supabase
+      .from('memories')
+      .select('*')
+      .eq('code', currentCode)
+      .order('ts', { ascending: false });
+
+    if(error) throw error;
+    loading.style.display = 'none';
+    if(!data || data.length === 0){
+      empty.style.display = 'block';
+      return;
+    }
+    data.forEach(renderCard);
+  }catch(e){
+    loading.textContent = 'Could not load memories. Pull to refresh or try again.';
+    console.error(e);
+  }
+}
+
+function renderCard(entry){
+  const feed = document.getElementById('feed');
+  const div = document.createElement('div');
+  const dateStr = new Date(entry.ts).toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'});
+
+  if(entry.type === 'photo'){
+    div.className = 'cartouche photo-card';
+    div.innerHTML = `
+      <img src="${entry.content}" alt="${entry.caption || 'memory photo'}">
+      <div class="photo-meta">
+        <span>${entry.site ? '📍 ' + escapeHtml(entry.site) : ''} ${entry.caption ? '— ' + escapeHtml(entry.caption) : ''}</span>
+        <span>${dateStr}</span>
+      </div>`;
+  } else if(entry.type === 'fact'){
+    div.className = 'cartouche';
+    div.innerHTML = `
+      <div class="card-icon">✎</div>
+      <div class="card-body">
+        ${entry.site ? `<div class="card-site">${escapeHtml(entry.site)}</div>` : ''}
+        <div class="card-text">${escapeHtml(entry.content)}</div>
+        <div class="card-meta">${dateStr}</div>
+      </div>`;
+  } else if(entry.type === 'video'){
+    div.className = 'cartouche';
+    div.innerHTML = `
+      <div class="card-icon">▶</div>
+      <div class="card-body">
+        ${entry.site ? `<div class="card-site">${escapeHtml(entry.site)}</div>` : ''}
+        <div class="card-text">${entry.note ? escapeHtml(entry.note) : 'A video moment'}</div>
+        <a class="video-link" href="${entry.content}" target="_blank" rel="noopener">Watch video ↗</a>
+        <div class="card-meta">${dateStr}</div>
+      </div>`;
+  }
+  feed.appendChild(div);
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ---------------- modal ---------------- */
+function openModal(){
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modalStatus').textContent = '';
+  document.getElementById('modalStatus').className = 'status-msg';
+}
+
+function switchType(type){
+  currentType = type;
+  document.querySelectorAll('.type-tab').forEach(t=> t.classList.toggle('active', t.dataset.type === type));
+  document.getElementById('photoFields').style.display = type === 'photo' ? 'block' : 'none';
+  document.getElementById('factFields').style.display = type === 'fact' ? 'block' : 'none';
+  document.getElementById('videoFields').style.display = type === 'video' ? 'block' : 'none';
+}
+
+function handlePhotoSelect(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const status = document.getElementById('modalStatus');
+  status.textContent = 'Processing photo…';
+  status.className = 'status-msg';
+
+  const img = new Image();
+  const reader = new FileReader();
+  reader.onload = e => {
+    img.onload = () => {
+      const maxW = 900;
+      const scale = Math.min(1, maxW / img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob=>{
+        pendingPhotoBlob = blob;
+        document.getElementById('previewThumb').src = canvas.toDataURL('image/jpeg', 0.7);
+        document.getElementById('previewThumb').style.display = 'block';
+        document.getElementById('fileDropLabel').textContent = 'Photo ready — tap to change';
+        status.textContent = '';
+      }, 'image/jpeg', 0.75);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveMemory(){
+  const status = document.getElementById('modalStatus');
+  const saveBtn = document.getElementById('saveBtn');
+  const site = document.getElementById('siteField').value.trim();
+  const ts = Date.now();
+  let entry = null;
+
+  if(currentType === 'photo' && !pendingPhotoBlob){
+    status.textContent = 'Please choose a photo first.';
+    status.className = 'status-msg err';
+    return;
+  }
+  if(currentType === 'fact' && !document.getElementById('factText').value.trim()){
+    status.textContent = 'Please write something first.';
+    status.className = 'status-msg err';
+    return;
+  }
+  if(currentType === 'video' && !document.getElementById('videoUrl').value.trim()){
+    status.textContent = 'Please paste a video link.';
+    status.className = 'status-msg err';
+    return;
+  }
+
+  saveBtn.disabled = true;
+  status.textContent = 'Saving…';
+  status.className = 'status-msg';
+
+  try{
+    if(currentType === 'photo'){
+      const path = `${currentCode}/${ts}.jpg`;
+      const { error: upErr } = await supabase.storage.from('photos').upload(path, pendingPhotoBlob, { contentType: 'image/jpeg' });
+      if(upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('photos').getPublicUrl(path);
+      entry = { code: currentCode, type:'photo', content: pub.publicUrl, caption: document.getElementById('photoCaption').value.trim(), site, ts };
+    } else if(currentType === 'fact'){
+      entry = { code: currentCode, type:'fact', content: document.getElementById('factText').value.trim(), site, ts };
+    } else if(currentType === 'video'){
+      entry = { code: currentCode, type:'video', content: document.getElementById('videoUrl').value.trim(), note: document.getElementById('videoNote').value.trim(), site, ts };
+    }
+
+    const { error: insErr } = await supabase.from('memories').insert(entry);
+    if(insErr) throw insErr;
+
+    status.textContent = 'Saved!';
+    status.className = 'status-msg ok';
+    setTimeout(()=>{
+      closeModal();
+      resetForm();
+      loadFeed();
+    }, 500);
+  }catch(e){
+    status.textContent = 'Could not save — check your connection and try again.';
+    status.className = 'status-msg err';
+    console.error(e);
+  }finally{
+    saveBtn.disabled = false;
+  }
+}
+
+function resetForm(){
+  pendingPhotoBlob = null;
+  document.getElementById('previewThumb').style.display = 'none';
+  document.getElementById('fileDropLabel').textContent = 'Tap to choose a photo';
+  document.getElementById('photoFile').value = '';
+  document.getElementById('photoCaption').value = '';
+  document.getElementById('factText').value = '';
+  document.getElementById('videoUrl').value = '';
+  document.getElementById('videoNote').value = '';
+  document.getElementById('siteField').value = '';
+}
+
+/* ---------------- init ---------------- */
+(function init(){
+  const url = new URL(window.location.href);
+  const id = url.searchParams.get('id');
+  if(id){
+    currentCode = id.toUpperCase();
+    showJourney(currentCode);
+  }
+})();
+</script>
+</body>
+</html>
