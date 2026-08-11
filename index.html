@@ -4,17 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Egypt Journey</title>
-<!--
-  ============================================================
-  SETUP — 3 THINGS TO DO BEFORE THIS GOES LIVE
-  ============================================================
-  1) Create a free Supabase project at supabase.com
-  2) Run the SQL + storage setup described in the chat message
-  3) Paste your Project URL + anon key into the two constants
-     below (SUPABASE_URL / SUPABASE_ANON_KEY)
-  That's it — everything else already works.
-  ============================================================
--->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -45,7 +34,6 @@
   button{font-family:inherit; cursor:pointer;}
   input, textarea, select{font-family:inherit;}
 
-  /* -------- shared layout -------- */
   .wrap{max-width:640px; margin:0 auto; padding:6vh 6vw 10vh;}
   .eyebrow{
     font-family:'Cinzel', serif;
@@ -76,7 +64,6 @@
   }
   .btn:disabled{opacity:0.5; cursor:not-allowed;}
 
-  /* -------- entry screen -------- */
   #entry-screen{
     min-height:100svh;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -125,7 +112,6 @@
     content:""; flex:1; height:1px; background:var(--panel-line);
   }
 
-  /* -------- journey screen -------- */
   #journey-screen{display:none;}
   .journey-header{
     display:flex; justify-content:space-between; align-items:flex-start;
@@ -168,7 +154,6 @@
   }
   .empty-state p{margin-bottom:1.2rem;}
 
-  /* -------- cartouche cards -------- */
   .feed{display:flex; flex-direction:column; gap:1.3rem; margin-bottom:2.5rem;}
   .cartouche{
     position:relative;
@@ -225,7 +210,6 @@
     text-decoration:none; border-bottom:1px solid var(--gold-bright);
   }
 
-  /* -------- add button + modal -------- */
   .fab{
     position:fixed;
     bottom:5vh; right:6vw;
@@ -325,17 +309,6 @@
 </style>
 </head>
 <body>
-<div id="debugBanner" style="display:none; position:fixed; top:0; left:0; right:0; background:#c0392b; color:#fff; padding:1rem; z-index:99999; font-family:monospace; font-size:0.78rem; white-space:pre-wrap; direction:ltr; text-align:left;"></div>
-<script>
-window.onerror = function(msg, url, line, col, error){
-  var b = document.getElementById('debugBanner');
-  if(b){
-    b.style.display = 'block';
-    b.textContent = 'JS ERROR: ' + msg + '  (line ' + line + ')';
-  }
-  return false;
-};
-</script>
 
   <!-- ============ ENTRY SCREEN ============ -->
   <div id="entry-screen">
@@ -440,20 +413,17 @@ window.onerror = function(msg, url, line, col, error){
   </div>
 
 <script>
-/* ==== PASTE YOUR SUPABASE PROJECT DETAILS HERE ==== */
 const SUPABASE_URL = "https://pmdqbhcxfjzeifeemroq.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtZHFiaGN4Zmp6ZWlmZWVtcm9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0ODA5OTEsImV4cCI6MjEwMjA1Njk5MX0._V34LEiiZBbLfhZuzNGdFdl-XdHWOSQ2gF9ja3lqvak";
-/* ==================================================== */
+const SUPABASE_ANON_KEY = "sb_publishable_5cttaBAAKHkwb6bmIznJXw_XyLJwezN";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentCode = null;
 let currentType = 'photo';
-let pendingPhotoBlob = null; // now a Blob, uploaded to Storage instead of base64
+let pendingPhotoBlob = null;
 
-/* ---------------- code helpers ---------------- */
 function genCode(){
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let c = '';
   for(let i=0;i<6;i++) c += chars[Math.floor(Math.random()*chars.length)];
   return c;
@@ -493,7 +463,6 @@ function goToEntry(){
   window.history.replaceState({}, '', url);
 }
 
-/* ---------------- journey screen ---------------- */
 async function showJourney(code){
   document.getElementById('entry-screen').style.display = 'none';
   document.getElementById('journey-screen').style.display = 'block';
@@ -584,7 +553,6 @@ function escapeHtml(s){
   return d.innerHTML;
 }
 
-/* ---------------- modal ---------------- */
 function openModal(){
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -647,72 +615,4 @@ async function saveMemory(){
   }
   if(currentType === 'fact' && !document.getElementById('factText').value.trim()){
     status.textContent = 'Please write something first.';
-    status.className = 'status-msg err';
-    return;
-  }
-  if(currentType === 'video' && !document.getElementById('videoUrl').value.trim()){
-    status.textContent = 'Please paste a video link.';
-    status.className = 'status-msg err';
-    return;
-  }
-
-  saveBtn.disabled = true;
-  status.textContent = 'Saving…';
-  status.className = 'status-msg';
-
-  try{
-    if(currentType === 'photo'){
-      const path = `${currentCode}/${ts}.jpg`;
-      const { error: upErr } = await supabase.storage.from('photos').upload(path, pendingPhotoBlob, { contentType: 'image/jpeg' });
-      if(upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('photos').getPublicUrl(path);
-      entry = { code: currentCode, type:'photo', content: pub.publicUrl, caption: document.getElementById('photoCaption').value.trim(), site, ts };
-    } else if(currentType === 'fact'){
-      entry = { code: currentCode, type:'fact', content: document.getElementById('factText').value.trim(), site, ts };
-    } else if(currentType === 'video'){
-      entry = { code: currentCode, type:'video', content: document.getElementById('videoUrl').value.trim(), note: document.getElementById('videoNote').value.trim(), site, ts };
-    }
-
-    const { error: insErr } = await supabase.from('memories').insert(entry);
-    if(insErr) throw insErr;
-
-    status.textContent = 'Saved!';
-    status.className = 'status-msg ok';
-    setTimeout(()=>{
-      closeModal();
-      resetForm();
-      loadFeed();
-    }, 500);
-  }catch(e){
-    status.textContent = 'Could not save — check your connection and try again.';
-    status.className = 'status-msg err';
-    console.error(e);
-  }finally{
-    saveBtn.disabled = false;
-  }
-}
-
-function resetForm(){
-  pendingPhotoBlob = null;
-  document.getElementById('previewThumb').style.display = 'none';
-  document.getElementById('fileDropLabel').textContent = 'Tap to choose a photo';
-  document.getElementById('photoFile').value = '';
-  document.getElementById('photoCaption').value = '';
-  document.getElementById('factText').value = '';
-  document.getElementById('videoUrl').value = '';
-  document.getElementById('videoNote').value = '';
-  document.getElementById('siteField').value = '';
-}
-
-/* ---------------- init ---------------- */
-(function init(){
-  const url = new URL(window.location.href);
-  const id = url.searchParams.get('id');
-  if(id){
-    currentCode = id.toUpperCase();
-    showJourney(currentCode);
-  }
-})();
-</script>
-</body>
-</html>
+    status.className = 'status-
