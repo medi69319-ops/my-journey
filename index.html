@@ -606,6 +606,7 @@ async function saveMemory(){
   const saveBtn = document.getElementById('saveBtn');
   const site = document.getElementById('siteField').value.trim();
   const ts = Date.now();
+
   let entry = null;
 
   if(currentType === 'photo' && !pendingPhotoBlob){
@@ -613,6 +614,132 @@ async function saveMemory(){
     status.className = 'status-msg err';
     return;
   }
+
   if(currentType === 'fact' && !document.getElementById('factText').value.trim()){
     status.textContent = 'Please write something first.';
-    status.className = 'status-
+    status.className = 'status-msg err';
+    return;
+  }
+
+  if(currentType === 'video' && !document.getElementById('videoUrl').value.trim()){
+    status.textContent = 'Please paste a video link.';
+    status.className = 'status-msg err';
+    return;
+  }
+
+  saveBtn.disabled = true;
+  status.textContent = 'Saving…';
+  status.className = 'status-msg';
+
+  try {
+    if(currentType === 'photo'){
+      const path = `${currentCode}/${ts}.jpg`;
+
+      const { error: uploadError } =
+        await supabase.storage
+          .from('photos')
+          .upload(path, pendingPhotoBlob, {
+            contentType: 'image/jpeg'
+          });
+
+      if(uploadError) throw uploadError;
+
+      const { data: publicData } =
+        supabase.storage
+          .from('photos')
+          .getPublicUrl(path);
+
+      entry = {
+        code: currentCode,
+        type: 'photo',
+        content: publicData.publicUrl,
+        caption: document.getElementById('photoCaption').value.trim(),
+        site,
+        ts
+      };
+
+    } else if(currentType === 'fact') {
+
+      entry = {
+        code: currentCode,
+        type: 'fact',
+        content: document.getElementById('factText').value.trim(),
+        site,
+        ts
+      };
+
+    } else if(currentType === 'video') {
+
+      entry = {
+        code: currentCode,
+        type: 'video',
+        content: document.getElementById('videoUrl').value.trim(),
+        note: document.getElementById('videoNote').value.trim(),
+        site,
+        ts
+      };
+    }
+
+    const { error: insertError } =
+      await supabase
+        .from('memories')
+        .insert(entry);
+
+    if(insertError) throw insertError;
+
+    status.textContent = 'Saved!';
+    status.className = 'status-msg ok';
+
+    setTimeout(() => {
+      closeModal();
+      resetForm();
+      loadFeed();
+    }, 500);
+
+  } catch(error) {
+    console.error('SAVE ERROR:', error);
+
+    status.textContent =
+      'Could not save — check your connection and try again.';
+
+    status.className = 'status-msg err';
+
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+
+
+function resetForm(){
+  pendingPhotoBlob = null;
+
+  document.getElementById('previewThumb').style.display = 'none';
+  document.getElementById('fileDropLabel').textContent =
+    'Tap to choose a photo';
+
+  document.getElementById('photoFile').value = '';
+  document.getElementById('photoCaption').value = '';
+  document.getElementById('factText').value = '';
+  document.getElementById('videoUrl').value = '';
+  document.getElementById('videoNote').value = '';
+  document.getElementById('siteField').value = '';
+}
+
+
+/* ---------------- automatic startup ---------------- */
+
+(function init(){
+
+  const url = new URL(window.location.href);
+  const id = url.searchParams.get('id');
+
+  if(id){
+    currentCode = id.toUpperCase();
+    showJourney(currentCode);
+  }
+
+})();
+</script>
+
+</body>
+</html>
